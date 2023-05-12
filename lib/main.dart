@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => MyAppState(),
+      create: (context) => NumberProvider()..getNew(0),
       child: MaterialApp(
         title: 'Number App',
         theme: ThemeData(
@@ -26,22 +26,24 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyAppState extends ChangeNotifier {
+class NumberProvider extends ChangeNotifier {
   var rand = Random();
-  var current = 0;
+  var current = "";
   var fact = "This number is a number.";
-  void getNew(bool mathf) {
-    current = rand.nextInt(200);
-    var math = "";
-    if(mathf) math = "/math";
+  void getNew(int setting) {
+    //current = rand.nextInt(2023);
+    var extra = "";
+    if(setting == 1) extra = "/math";
+    if(setting == 2) extra = "/year";
     http.get(
-      Uri.parse('http://numbersapi.com/$current$math'),
+      Uri.parse('http://numbersapi.com/random$extra'),
     ).then((resp) {
       //print(resp.body.toString());
       fact = resp.body.toString();
+      current = fact.split(' ')[0];
       notifyListeners();
     });
-    notifyListeners();
+    //notifyListeners();
   }
 }
 
@@ -54,16 +56,36 @@ class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 0;
   @override
   Widget build(BuildContext context) {
+    var numProv = context.watch<NumberProvider>();
     return LayoutBuilder(
       builder: (context, constraints) {
         return Scaffold(
-          body: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: GeneratorPage(),
-                ),
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          body: SafeArea(
+            minimum: EdgeInsets.all(24),
+            child: <Widget>[TriviaPage(), MathPage(), YearPage()][selectedIndex]
+          ),
+          bottomNavigationBar: NavigationBar(
+            onDestinationSelected: (int index) {
+              setState(() {
+                selectedIndex = index;
+              });
+              numProv.getNew(selectedIndex);
+            },
+            selectedIndex: selectedIndex,
+            labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+            destinations: const <NavigationDestination>[
+              NavigationDestination(
+                icon: Icon(Icons.question_mark_rounded),
+                label: 'Trivia',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.plus_one_rounded),
+                label: 'Math',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.calendar_month_rounded),
+                label: 'Year',
               ),
             ],
           ),
@@ -74,28 +96,74 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 
-class GeneratorPage extends StatelessWidget {
+class TriviaPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
-    //appState.getNew();
-    var number = appState.current;
-    var fact = appState.fact;
     final theme = Theme.of(context);
-    final astyle = theme.textTheme.displayMedium!.copyWith(
-      color: theme.colorScheme.onPrimary,
-    );
     return Center(
-      child: Column(
+        child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text("Numbers API", style: theme.textTheme.displayMedium),
+          Text("Trivia", style: theme.textTheme.bodyLarge),
           SizedBox(height: 50),
+          GeneratorWidget(index: 0)]));
+  }
+}
+
+class MathPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("Numbers API", style: theme.textTheme.displayMedium),
+              Text("Math", style: theme.textTheme.bodyLarge),
+              SizedBox(height: 50),
+              GeneratorWidget(index: 1)]));
+  }
+}
+
+class YearPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("Numbers API", style: theme.textTheme.displayMedium),
+              Text("Year", style: theme.textTheme.bodyLarge),
+              SizedBox(height: 50),
+              GeneratorWidget(index: 2)]));
+  }
+}
+
+class GeneratorWidget extends StatelessWidget {
+  const GeneratorWidget({
+    super.key,
+    required this.index
+  });
+  final int index;
+  @override
+  Widget build(BuildContext context) {
+    var numProv = context.watch<NumberProvider>();
+    String number = numProv.current;
+    var fact = numProv.fact;
+    final theme = Theme.of(context);
+    final colortheme = <ThemeData>[theme, ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.greenAccent)), ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.pink))][index];
+    final astyle = theme.textTheme.displayMedium!.copyWith(
+      color: theme.colorScheme.onPrimary,
+    );
+    return Column(
+        children: [
           Card(
-          color: theme.colorScheme.primary,
+          color: colortheme.colorScheme.primary,
             child: Padding(
               padding: const EdgeInsets.all(20.0),
-              child: Text(number.toString(), style: astyle),
+              child: Text(number, style: astyle),
               )
           ),
           SizedBox(height: 10),
@@ -112,23 +180,14 @@ class GeneratorPage extends StatelessWidget {
             children: [
               ElevatedButton.icon(
                 onPressed: () {
-                  appState.getNew(false);
+                  numProv.getNew(index);
                 },
                 icon: Icon(Icons.numbers, size:20),
                 label: Text('Random'),
               ),
-              SizedBox(width: 20),
-              ElevatedButton.icon(
-                onPressed: () {
-                  appState.getNew(true);
-                },
-                icon: Icon(Icons.plus_one, size:20),
-                label: Text('Random (Math)'),
-              ),
             ],
           ),
         ],
-      ),
-    );
+      );
   }
 }
