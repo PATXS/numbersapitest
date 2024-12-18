@@ -1,5 +1,3 @@
-Here’s an updated `README.md` with more emojis and no code blocks:  
-
 # 🎉 Numbers API Android App 📱✨  
 
 This is a simple and fun Android app built with Dart and Flutter 🐦 that fetches **cool facts** about numbers using the [Numbers API](http://numbersapi.com) 🌟. The app delivers trivia, math, date, and year facts 🤓 in a clean and interactive interface.  
