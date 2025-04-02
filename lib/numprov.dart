@@ -17,7 +17,6 @@ class NumberProvider extends ChangeNotifier {
       Uri.parse('http://numbersapi.com/random$extra'),
     )
         .then((resp) {
-      //print(resp.body.toString());
       fact = resp.body.toString();
       current = fact.split(' ')[0];
       notifyListeners();
